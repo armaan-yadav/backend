@@ -1,8 +1,9 @@
 import express from "express";
 import { v4 } from "uuid";
-
+import jwt from "jsonwebtoken";
 const app = express();
 const port = 3000;
+const JWT_SECRET = "ilovejavascript";
 
 // *Functions
 function generateToken() {
@@ -50,15 +51,21 @@ app.post("/signin", (req, res) => {
     res.send({ message: "Incorrect password" });
   }
 
-  const token = generateToken();
-  user.token = token; //objects stored by ref so it directly mutates the global users array
+  //   const token = generateToken();
+  const token = jwt.sign(
+    {
+      username,
+    },
+    JWT_SECRET
+  );
   console.log(users);
   res.send({ token: token });
 });
 
 app.get("/me", (req, res) => {
   const token = req.headers.token;
-  const user = users.find((e) => e.token == token);
+  const { username } = jwt.verify(token, JWT_SECRET);
+  const user = users.find((e) => e.username == username);
 
   if (user) {
     res.send({ username: user.username, message: "Namaste <3" });
@@ -70,3 +77,11 @@ app.get("/me", (req, res) => {
 app.listen(port, () => {
   console.log("app is running on port ", port);
 });
+
+// tokens are stateful
+// jwt are stateless
+// jwt saves on round trip to database for verifying the user authenticity
+// jwt is not encryption but it's encoding
+
+// jwt.sign({},JWT_SECRET)
+// jwt.verify(jwtToken,JWT_SECRET)
